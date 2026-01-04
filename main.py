@@ -4,7 +4,7 @@ import datetime
 
 # --- 設定區 ---
 
-https://apexlegends.org/#A/
+#https://apexlegends.#htt#A/
 # 這些源通常包含經過解鎖或維護的鏈接
 SOURCE_URLS = [
 "https://raw.githubusercontent.com/fanmingming/live/main/tv/m3u/ipv6.m3u",
