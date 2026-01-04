@@ -1,7 +1,6 @@
 # 📺 HK IPTV Auto Updater | 香港電視台直播源自動更新
 
-![Update Status](https://github.com/sammy0101/hk-iptv-auto
-/actions/workflows/main.yml/badge.svg)
+![Update Status](https://github.com/sammy0101/hk-iptv-auto/actions/workflows/main.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
 這是一個基於 **GitHub Actions** 的自動化 IPTV 聚合項目。
@@ -72,5 +71,3 @@
 4.  **地區限制**: 部分官方源 (如 ViuTV, NowTV) 可能有 **Geo-block (地區限制)**，僅限香港 IP 播放。非香港地區用戶可能無法觀看部分頻道。
 
 ---
-
-**Last Update:** 每天自動更新
