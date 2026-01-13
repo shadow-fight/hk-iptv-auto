@@ -21,7 +21,10 @@ SOURCE_URLS = [
     "https://raw.githubusercontent.com/yuanzl77/IPTV/main/live.m3u",
     "https://iptv-org.github.io/iptv/countries/hk.m3u",
     "https://raw.githubusercontent.com/joevess/IPTV/main/home.m3u8",
-    "https://raw.githubusercontent.com/YanG-1989/m3u/main/Gather.m3u"
+    "https://raw.githubusercontent.com/YanG-1989/m3u/main/Gather.m3u",
+    "https://raw.githubusercontent.com/iptv-org/iptv/refs/heads/master/streams/hk.m3u",
+    "https://raw.githubusercontent.com/Free-TV/IPTV/refs/heads/master/playlists/playlist_hong_kong.m3u8",
+    "https://raw.githubusercontent.com/vbskycn/iptv/refs/heads/master/tv/iptv4.m3u"
 ]
 
 # 2. 包含關鍵字 (必須包含這些字才抓取)
