@@ -1,5 +1,5 @@
 #EXTM3U x-tvg-url="https://epg.112114.xyz/pp.xml"
-# Update: 2026-02-25 13:10:15
+# Update: 2026-02-26 02:12:23
 #EXTINF:-1 group-title="Hong Kong" logo="https://epg.112114.xyz/logo/翡翠台.png",翡翠台
 http://r.jdshipin.com/qClQf
 #EXTINF:-1 group-title="Hong Kong" logo="https://epg.112114.xyz/logo/翡翠台.png",翡翠台
@@ -70,12 +70,16 @@ http://aktv.top/AKTV/live/aktv/null-2/AKTV.m3u8$LR•IPV4
 http://fm1077.serv00.net/Smart.php?id=j2_twn$LR•IPV4
 #EXTINF:-1 group-title="Hong Kong" logo="https://epg.112114.xyz/logo/ViuTV.png",ViuTV
 http://r.jdshipin.com/vSJvl
+#EXTINF:-1 group-title="Hong Kong" logo="https://epg.112114.xyz/logo/ViuTV.png",ViuTV
+http://r.jdshipin.com/TcKr2
 #EXTINF:-1 group-title="Hong Kong" logo="https://epg.112114.xyz/logo/Viutv.png",Viutv
 https://turkmedya-live.ercdn.net/tv360/tv360.m3u8$LR•IPV4『线路1』
 #EXTINF:-1 group-title="Hong Kong" logo="https://epg.112114.xyz/logo/Viutv.png",Viutv
 https://live.hkdvb.com/hls/live/99.m3u8?token=631170156112507&edge=live.tvfree.sbs$LR•IPV4『线路2』
 #EXTINF:-1 group-title="Hong Kong" logo="https://epg.112114.xyz/logo/VIUTV.png",VIUTV
 http://php.jdshipin.com/TVOD/iptv.php?id=viutv2
+#EXTINF:-1 group-title="Hong Kong" logo="https://epg.112114.xyz/logo/HOY TV.png",HOY TV
+http://r.jdshipin.com/sFw4S
 #EXTINF:-1 group-title="Hong Kong" logo="https://epg.112114.xyz/logo/HOY78.png",HOY78
 http://cdn.163189.xyz/live/hoy/stream.m3u8
 #EXTINF:-1 group-title="Hong Kong" logo="https://epg.112114.xyz/logo/HOY TV.png",HOY TV
