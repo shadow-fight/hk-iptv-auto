@@ -1,6 +1,9 @@
-import requests
-import re
 import datetime
+import re
+
+import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from opencc import OpenCC
 
 # 初始化繁簡轉換器
@@ -68,12 +71,58 @@ STATIC_CHANNELS = [
 
 # --- 邏輯區 ---
 
+SOURCE_TIMEOUT = 15
+URL_CHECK_TIMEOUT = 2
+
+
+def normalize_text(text):
+    """統一繁簡與用字，減少重複轉換成本。"""
+    return cc.convert(text).replace('臺', '台')
+
+
+def create_session():
+    """建立帶有重試策略的 HTTP Session，提升網路穩定性。"""
+    session = requests.Session()
+    retry = Retry(
+        total=2,
+        connect=2,
+        read=2,
+        backoff_factor=0.5,
+        status_forcelist=(429, 500, 502, 503, 504),
+        allowed_methods=frozenset(["GET", "HEAD"]),
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+    return session
+
+
+SESSION = create_session()
+KEYWORDS_NORMALIZED = tuple(normalize_text(k).lower() for k in KEYWORDS)
+BLOCK_KEYWORDS_LOWER = tuple(k.lower() for k in BLOCK_KEYWORDS)
+
+
+def is_blocked_channel(name_lower):
+    return any(keyword in name_lower for keyword in BLOCK_KEYWORDS_LOWER)
+
+
+def is_allowed_channel(name_lower):
+    return any(keyword in name_lower for keyword in KEYWORDS_NORMALIZED)
+
+
 def check_url(url):
     """檢測鏈接是否有效 (超時 2 秒)"""
     try:
-        response = requests.get(url, timeout=2, stream=True)
-        return response.status_code == 200
-    except:
+        with SESSION.head(url, timeout=URL_CHECK_TIMEOUT, allow_redirects=True) as response:
+            if 200 <= response.status_code < 400:
+                return True
+    except requests.RequestException:
+        pass
+
+    try:
+        with SESSION.get(url, timeout=URL_CHECK_TIMEOUT, stream=True, allow_redirects=True) as response:
+            return 200 <= response.status_code < 400
+    except requests.RequestException:
         return False
 
 def get_sort_key(item):
@@ -86,20 +135,18 @@ def get_sort_key(item):
 
 def fetch_and_parse():
     found_channels = []
+    seen_urls = set()
     
     print("🚀 任務開始！正在抓取網路源...", flush=True)
     
     for index, source in enumerate(SOURCE_URLS):
         print(f"  [{index+1}/{len(SOURCE_URLS)}] 正在讀取: {source}", flush=True)
         try:
-            r = requests.get(source, timeout=15)
+            r = SESSION.get(source, timeout=SOURCE_TIMEOUT)
             r.encoding = 'utf-8'
+            r.raise_for_status()
             
-            if r.status_code != 200:
-                print(f"    ⚠️ 無法讀取 (Status: {r.status_code})", flush=True)
-                continue
-            
-            lines = r.text.split('\n')
+            lines = r.text.splitlines()
             current_name = ""
             count_added = 0
             
@@ -111,28 +158,28 @@ def fetch_and_parse():
                     match = re.search(r',(.+)$', line)
                     if match:
                         raw_name = match.group(1).strip()
-                        # 轉繁體
-                        converted_name = cc.convert(raw_name)
-                        # 修正「臺」為「台」
-                        current_name = converted_name.replace('臺', '台')
+                        current_name = normalize_text(raw_name)
                         
                 elif line.startswith("http") and current_name:
+                    name_lower = current_name.lower()
+
                     # 1. 黑名單檢查
-                    if any(b.lower() in current_name.lower() for b in BLOCK_KEYWORDS):
+                    if is_blocked_channel(name_lower):
                         current_name = ""
                         continue
 
                     # 2. 白名單檢查
-                    if any(cc.convert(k).replace('臺', '台').lower() in current_name.lower() for k in KEYWORDS):
+                    if is_allowed_channel(name_lower):
                         # 去重
-                        if not any(c['url'] == line for c in found_channels):
+                        if line not in seen_urls:
+                            seen_urls.add(line)
                             found_channels.append({"name": current_name, "url": line})
                             count_added += 1
                     current_name = "" # 重置
             
             print(f"    ✅ 抓取成功，新增 {count_added} 個頻道", flush=True)
             
-        except Exception as e:
+        except requests.RequestException as e:
             print(f"    ❌ 抓取錯誤: {e}", flush=True)
 
     return found_channels
@@ -141,11 +188,7 @@ def generate_m3u(channels):
     total = len(channels)
     print(f"\n🔍 共找到 {total} 個潛在頻道，開始檢測有效性...", flush=True)
     
-    final_list = []
-    
-    # 1. 加入靜態源
-    for static in STATIC_CHANNELS:
-        final_list.append(static)
+    final_list = list(STATIC_CHANNELS)
         
     # 2. 檢測網路源
     for i, ch in enumerate(channels):
@@ -162,16 +205,20 @@ def generate_m3u(channels):
     final_list.sort(key=get_sort_key)
 
     # 4. 寫入文件
-    content = '#EXTM3U x-tvg-url="https://epg.112114.xyz/pp.xml"\n'
-    content += f'# Update: {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n'
+    content_lines = [
+        '#EXTM3U x-tvg-url="https://epg.112114.xyz/pp.xml"',
+        f'# Update: {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}',
+    ]
     
     for item in final_list:
         final_name = item["name"].replace('臺', '台')
-        content += f'#EXTINF:-1 group-title="Hong Kong" logo="https://epg.112114.xyz/logo/{final_name}.png",{final_name}\n'
-        content += f'{item["url"]}\n'
+        content_lines.append(
+            f'#EXTINF:-1 group-title="Hong Kong" logo="https://epg.112114.xyz/logo/{final_name}.png",{final_name}'
+        )
+        content_lines.append(item["url"])
 
     with open("hk_live.m3u", "w", encoding="utf-8") as f:
-        f.write(content)
+        f.write("\n".join(content_lines) + "\n")
 
     print(f"\n🎉 全部完成！共收錄 {len(final_list)} 個有效頻道。", flush=True)
 
